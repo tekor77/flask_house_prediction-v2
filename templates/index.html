@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Harga Rumah</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #FFFFFF; /* Latar belakang putih */
+            color: #333333; /* Warna teks default */
+        }
+        .container {
+            max-width: 900px; /* Sedikit lebih lebar untuk menampung dua kolom */
+            background-color: #FFFFFF; /* Pastikan container juga putih */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Sedikit bayangan */
+        }
+        .form-group label {
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 0.5rem;
+        }
+        .form-group input {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease-in-out;
+            background-color: #f9fafb; /* Sedikit abu-abu untuk input */
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6; /* Blue-500 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Blue-500 with opacity */
+        }
+        .btn-clear {
+            background-color: #6b7280; /* Gray-500 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .btn-clear:hover {
+            background-color: #4b5563; /* Gray-600 */
+        }
+        .btn-submit {
+            background-color: #f97316; /* Orange-500 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .btn-submit:hover {
+            background-color: #ea580c; /* Orange-600 */
+        }
+        .result-box {
+            background-color: #f3f4f6; /* Light gray background for result boxes */
+            border: 1px solid #e5e7eb; /* Border for results */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            color: #333333; /* Warna teks hasil */
+            font-weight: 500;
+        }
+        .flag-button {
+            background-color: #4f46e5; /* Indigo-600 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+            width: 100%; /* Lebar penuh */
+        }
+        .flag-button:hover {
+            background-color: #4338ca; /* Indigo-700 */
+        }
+        .title-section {
+            background-color: #FFFFFF; /* Background putih untuk judul */
+            padding-bottom: 2rem;
+        }
+        .prediction-section {
+            background-color: #FFFFFF; /* Background putih untuk bagian prediksi */
+            padding-top: 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) { /* Changed breakpoint from 640px to 768px for md */
+            .grid-cols-2-md {
+                grid-template-columns: 1fr; /* Stack columns on small/medium screens */
+            }
+            .container {
+                padding: 1rem;
+            }
+        }
+        /* CSS untuk ukuran tinggi kontainer grafik */
+        .chart-container {
+            height: 300px; /* Atur tinggi grafik di sini */
+            position: relative; /* Penting untuk responsivitas Chart.js */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <div class="container p-8 rounded-xl shadow-lg w-full">
+        <div class="title-section text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">PREDIKSI HARGA RUMAH</h1>
+            <p class="text-gray-600">Masukkan fitur rumah, sistem akan memprediksi harga berdasarkan Linear Regression & Random Forest</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 grid-cols-2-md">
+            <!-- Input Form Section -->
+            <div class="input-section space-y-6">
+                <form id="predictionForm" class="space-y-6">
+                    <div class="form-group">
+                        <label for="luas_bangunan" class="block text-sm">Luas Bangunan (M²)</label>
+                        <input type="number" id="luas_bangunan" name="luas_bangunan" placeholder="Contoh: 120" required class="mt-1">
+                    </div>
+                    <div class="form-group">
+                        <label for="luas_tanah" class="block text-sm">Luas Tanah (M²)</label>
+                        <input type="number" id="luas_tanah" name="luas_tanah" placeholder="Contoh: 150" required class="mt-1">
+                    </div>
+                    <div class="form-group">
+                        <label for="kamar_tidur" class="block text-sm">Jumlah Kamar Tidur (Bh)</label>
+                        <input type="number" id="kamar_tidur" name="kamar_tidur" placeholder="Contoh: 3" required class="mt-1">
+                    </div>
+                    <div class="form-group">
+                        <label for="kamar_mandi" class="block text-sm">Jumlah Kamar Mandi (Bh)</label>
+                        <input type="number" id="kamar_mandi" name="kamar_mandi" placeholder="Contoh: 2" required class="mt-1">
+                    </div>
+                    <div class="form-group">
+                        <label for="garasi" class="block text-sm">Jumlah Garasi (Bh)</label>
+                        <input type="number" id="garasi" name="garasi" placeholder="Contoh: 1" required class="mt-1">
+                    </div>
+
+                    <div class="flex justify-between mt-8 space-x-4">
+                        <button type="button" id="clearButton" class="btn-clear flex-1">
+                            Clear
+                        </button>
+                        <button type="submit" class="btn-submit flex-1">
+                            Submit
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Prediction Results Section -->
+            <div class="prediction-section flex flex-col space-y-6">
+                <div class="form-group">
+                    <label for="linregResultOutput" class="block text-sm">Prediksi Harga (Linear Regression)</label>
+                    <div id="linregResultOutput" class="result-box mt-1 h-12 flex items-center">
+                        <span id="linregValue"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="rfResultOutput" class="block text-sm">Prediksi Harga (Random Forest)</label>
+                    <div id="rfResultOutput" class="result-box mt-1 h-12 flex items-center">
+                        <span id="rfValue"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="flagButton" class="block text-sm"></label>
+                    <button type="button" id="flagButton" class="flag-button mt-1">
+                        Flag
+                    </button>
+                </div>
+
+                <div id="loadingIndicator" class="text-center text-gray-500 mt-6 hidden">
+                    Memuat prediksi...
+                </div>
+                <div id="errorMessages" class="text-red-600 text-center mt-4 hidden"></div>
+
+                <!-- Bagian untuk Akurasi Model dan Grafik -->
+                <div class="mt-8 pt-6 border-t border-gray-200">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 text-center">Akurasi Model Keseluruhan & Perbandingan Prediksi</h2>
+                    
+                    <!-- Tampilan Akurasi Model -->
+                    <div class="space-y-2 mb-6">
+                        <div class="flex justify-between items-center bg-blue-50 p-3 rounded-lg">
+                            <span class="font-medium text-blue-800">Akurasi Linear Regression:</span>
+                            <span class="font-bold text-blue-800" id="linregAccuracy">{{ linreg_r2 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-green-50 p-3 rounded-lg">
+                            <span class="font-medium text-green-800">Akurasi Random Forest:</span>
+                            <span class="font-bold text-green-800" id="rfAccuracy">{{ rf_r2 }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Grafik Perbandingan Prediksi -->
+                    <div class="bg-white p-4 rounded-lg shadow-md chart-container"> <!-- Added chart-container class -->
+                        <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">Perbandingan Hasil Prediksi</h3>
+                        <canvas id="predictionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Inisialisasi Chart.js
+        let predictionChart;
+        const ctx = document.getElementById('predictionChart').getContext('2d');
+
+        function initializeChart() {
+
+            // Hancurkan grafik yang ada jika ada untuk mencegah masalah inisialisasi ulang
+            if (predictionChart) {
+                predictionChart.destroy();
+            }
+
+            predictionChart = new Chart(ctx, {
+                type: 'bar', // Menggunakan grafik batang sederhana
+                data: {
+                    labels: ['Linear Regression', 'Random Forest'],
+                    datasets: [{
+                        label: 'Harga Prediksi (Juta Rp)', // Label untuk tooltip
+                        data: [0, 0], // Data awal dummy
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)', // Biru Tailwind dengan sedikit transparansi
+                            'rgba(249, 115, 22, 0.7)'  // Oranye Tailwind dengan sedikit transparansi
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(249, 115, 22, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Memastikan grafik responsif
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Harga (Juta Rp)' // Judul sumbu Y
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false // Sembunyikan legenda karena hanya ada satu dataset
+                        },
+                        title: {
+                            display: false, // Judul utama sudah ada di H3
+                            text: 'Perbandingan Hasil Prediksi'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    // Format tooltip agar menampilkan nilai Rupiah penuh
+                                    let value = context.raw * 1_000_000;
+                                    return 'Rp ' + value.toLocaleString('id-ID'); // Format dengan pemisah ribuan Indonesia
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000, // Durasi animasi saat update (1 detik)
+                        easing: 'easeOutQuart' // Efek easing animasi
+                    }
+                }
+            });
+        }
+
+        // Panggil initializeChart saat DOM dimuat
+        document.addEventListener('DOMContentLoaded', initializeChart);
+
+
+        document.getElementById('predictionForm').addEventListener('submit', async function(event) {
+            event.preventDefault(); // Mencegah pengiriman formulir default
+            
+            // Tampilkan indikator loading dan sembunyikan hasil/error sebelumnya
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            document.getElementById('linregValue').textContent = '';
+            document.getElementById('rfValue').textContent = '';
+            document.getElementById('errorMessages').classList.add('hidden');
+            document.getElementById('errorMessages').textContent = '';
+
+            const formData = new FormData(this);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(data).toString(),
+                });
+
+                const result = await response.json();
+
+                document.getElementById('loadingIndicator').classList.add('hidden');
+
+                if (response.ok) {
+                    document.getElementById('linregValue').textContent = result.linreg_prediction;
+                    document.getElementById('rfValue').textContent = result.rf_prediction;
+
+                    // Perbarui grafik dengan data prediksi baru
+                    predictionChart.data.datasets[0].data = [result.linreg_raw_value, result.rf_raw_value];
+                    predictionChart.update(); // Panggil update untuk animasi
+
+                } else {
+                    document.getElementById('errorMessages').textContent = 'Error: ' + (result.error || 'Terjadi kesalahan saat memprediksi.');
+                    document.getElementById('errorMessages').classList.remove('hidden');
+                }
+            } catch (error) {
+                document.getElementById('loadingIndicator').classList.add('hidden');
+                document.getElementById('errorMessages').textContent = 'Error koneksi: ' + error.message;
+                document.getElementById('errorMessages').classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('clearButton').addEventListener('click', function() {
+            document.getElementById('predictionForm').reset(); // Reset form fields
+            document.getElementById('linregValue').textContent = ''; // Clear prediction results
+            document.getElementById('rfValue').textContent = '';
+            document.getElementById('errorMessages').classList.add('hidden'); // Hide error messages
+            document.getElementById('errorMessages').textContent = '';
+            document.getElementById('loadingIndicator').classList.add('hidden'); // Hide loading indicator
+            
+            // Reset data grafik ke 0
+            predictionChart.data.datasets[0].data = [0, 0];
+            predictionChart.update(); // Panggil update untuk animasi reset
+        });
+
+        // Placeholder for Flag button functionality
+        // Placeholder untuk fungsi tombol Flag
+        document.getElementById('flagButton').addEventListener('click', function() {
+            alert('Fungsi Flag belum diimplementasikan.');
+        });
+    </script>
+</body>
+</html>
