@@ -3,11 +3,18 @@
     import pandas as pd
     import os
 
-    app = Flask(__name__)
+    # Dapatkan direktori absolut dari file app.py saat ini
+    # Get the absolute directory of the current app.py file
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    # Path to models directory
-    # Jalur ke direktori model
-    MODELS_DIR = os.path.join(os.path.dirname(__file__), 'models')
+    # Tentukan jalur ke folder templates dan models relatif terhadap BASE_DIR
+    # Define paths to templates and models folders relative to BASE_DIR
+    TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
+    MODELS_DIR = os.path.join(BASE_DIR, 'models')
+
+    # Inisialisasi aplikasi Flask, beritahu di mana folder templates berada
+    # Initialize Flask app, tell it where the templates folder is
+    app = Flask(__name__, template_folder=TEMPLATES_DIR)
 
     # Load the trained models
     # Muat model yang telah dilatih
@@ -15,7 +22,7 @@
         linreg_pipeline = joblib.load(os.path.join(MODELS_DIR, 'linreg_pipeline.pkl'))
         rf_model = joblib.load(os.path.join(MODELS_DIR, 'rf_model.pkl'))
     except FileNotFoundError:
-        print("Error: Model files not found. Please ensure 'linreg_pipeline.pkl' and 'rf_model.pkl' are in the 'models' directory.")
+        print(f"Error: Model files not found. Expected in {MODELS_DIR}. Please ensure 'linreg_pipeline.pkl' and 'rf_model.pkl' are in the 'models' directory.")
         exit()
 
     # Load model accuracies from file
@@ -31,7 +38,7 @@
                     rf_r2_score = float(line.split('=')[1])
         print("Model accuracies loaded from 'model_accuracies.txt'.")
     except FileNotFoundError:
-        print("Warning: 'model_accuracies.txt' not found. Using default R2 scores (0.0). Please run train_models.py.")
+        print(f"Warning: 'model_accuracies.txt' not found. Expected in {MODELS_DIR}. Using default R2 scores (0.0). Please run train_models.py.")
     except Exception as e:
         print(f"Error loading model accuracies: {e}. Using default R2 scores (0.0).")
 
@@ -42,7 +49,7 @@
         Renders the main prediction form page.
         Merender halaman formulir prediksi utama.
         """
-        return render_template('index.html', 
+        return render_template('index.html',
                                linreg_r2=f"{linreg_r2_score*100:.2f}%",
                                rf_r2=f"{rf_r2_score*100:.2f}%")
 
@@ -80,8 +87,3 @@
 
         except Exception as e:
             return jsonify(error=str(e)), 400
-
-    # Hapus atau komentari baris app.run() ini untuk deployment Vercel
-    # Remove or comment out this app.run() line for Vercel deployment
-    # if __name__ == '__main__':
-    #     app.run(debug=True)
