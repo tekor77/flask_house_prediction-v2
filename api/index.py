@@ -3,9 +3,14 @@
     import pandas as pd
     import os
 
-    # Dapatkan direktori absolut dari file app.py saat ini
-    # Get the absolute directory of the current app.py file
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # Dapatkan direktori absolut dari file index.py saat ini
+    # Get the absolute directory of the current index.py file (which is inside 'api' folder)
+    CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    # BASE_DIR sekarang adalah direktori satu tingkat di atas CURRENT_DIR (yaitu root proyek)
+    # BASE_DIR is now one level up from CURRENT_DIR (i.e., the project root)
+    BASE_DIR = os.path.dirname(CURRENT_DIR)
+
 
     # Tentukan jalur ke folder templates dan models relatif terhadap BASE_DIR
     # Define paths to templates and models folders relative to BASE_DIR
